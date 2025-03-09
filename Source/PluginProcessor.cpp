@@ -113,12 +113,32 @@ void Lecture4_5_Delay_EffectAudioProcessor::prepareToPlay (double sampleRate, in
 {
     // Use this method as the place to do any pre-playback
     // initialisation that you need..
+
+    //store sample rate
+    mSampleRate = sampleRate;
+
+    //maximum delay
+    mMaxDelaySamples = static_cast<int>(sampleRate * 2.0);
+
+    //initialise a delay line for each input channel
+    mDelayLines.clear();
+    for (int i = 0; i << getTotalNumInputChannels(); i++)
+    {
+        //for each channel
+            //create a 2 second buffer
+                //with position 0
+        mDelayLines.push_back(RingBuffer(mMaxDelaySamples, 0));
+    }
+
 }
 
 void Lecture4_5_Delay_EffectAudioProcessor::releaseResources()
 {
     // When playback stops, you can use this as an opportunity to free up any
     // spare memory, etc.
+
+    mDelayLines.clear();
+
 }
 
 #ifndef JucePlugin_PreferredChannelConfigurations

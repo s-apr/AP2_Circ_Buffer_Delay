@@ -87,6 +87,11 @@ private:
     juce::AudioParameterFloat* mMix;
     juce::AudioParameterFloat* mFeedback;
 
+    std::vector<RingBuffer> mDelayLines;
+    double mSampleRate = 44100.0;
+    int mMaxDelaySamples = 0;
+
+
     //==============================================================================
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (Lecture4_5_Delay_EffectAudioProcessor)
 };
