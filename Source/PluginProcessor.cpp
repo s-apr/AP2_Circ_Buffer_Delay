@@ -173,24 +173,45 @@ void Lecture4_5_Delay_EffectAudioProcessor::processBlock (juce::AudioBuffer<floa
     auto totalNumInputChannels  = getTotalNumInputChannels();
     auto totalNumOutputChannels = getTotalNumOutputChannels();
 
-    // In case we have more outputs than inputs, this code clears any output
-    // channels that didn't contain input data, (because these aren't
-    // guaranteed to be empty - they may contain garbage).
-    // This is here to avoid people getting screaming feedback
-    // when they first compile a plugin, but obviously you don't need to keep
-    // this code if your algorithm always overwrites all the output channels.
     for (auto i = totalNumInputChannels; i < totalNumOutputChannels; ++i)
         buffer.clear (i, 0, buffer.getNumSamples());
 
-    // This is the place where you'd normally do the guts of your plugin's
-    // audio processing...
-    // Make sure to reset the state if your inner loop is processing
-    // the samples and the outer loop is handling the channels.
-    // Alternatively, you can process the samples with the channels
-    // interleaved by keeping the same state.
+    //get param values
+    float delayTimeValue = mDelayTime->get();
+    float mixValue = mMix->get();
+    float feedbackValue = mFeedback->get();
+
+    //calculate delay in samples (0 to 2 seconds)
+    int delaySamples = static_cast<int>(delayTimeValue * mMaxDelaySamples);
+
+    //minimum delay of 1 sample
+        //jmax returns larger of two values
+    delaySamples = juce::jmax(1, delaySamples);
+
     for (int channel = 0; channel < totalNumInputChannels; ++channel)
     {
+        //ensure enough delay lines for all channels
+        if (channel >= mDelayLines.size())
+            break;
+
         auto* channelData = buffer.getWritePointer (channel);
+
+        //loop through each sample for totalnumsamples
+        for (int sample = 0; sample < buffer.getNumSamples(); sample++)
+        {
+            //read delayed sample
+            double delaySample = mDelayLines[channel].read(delaySamples);
+            
+            //store current input sample
+            double inputSample = channelData[sample];
+
+            //write delay with feedback
+            mDelayLines[channel].write(inputSample + delaySample * feedbackValue);
+
+            //mix dry and wet signals
+                //inputSample = dry signal (non-delayed sample)
+            channelData[sample] = inputSample * (1.0f - mixValue) + delaySample * mixValue;
+        }
 
         // ..do something to the data...
     }
